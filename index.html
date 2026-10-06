@@ -3,593 +3,579 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabla de Recompensas Interactiva - Isaac & Bruno</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Tabla de Recompensas Interactiva</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Canvas Confetti para animaciones -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Fredoka', cursive, sans-serif;
-            touch-action: manipulation;
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&display=swap');
+        body { font-family: 'Fredoka', sans-serif; background-color: #f2f7f5; }
+        
+        .tab-active { background-color: #10b981; color: white; border-color: #10b981; }
+        .tab-inactive { background-color: white; color: #374151; border-color: #e5e7eb; }
+        
+        .opt-btn { 
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 9999px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            filter: saturate(1.2);
         }
-        .sticker-card {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 3px solid rgba(255, 255, 255, 0.8);
-        }
-        .status-btn {
-            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
-        }
-        .status-btn:active {
-            transform: scale(0.85);
-        }
-        .status-btn.selected {
-            transform: scale(1.18);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; }
-            .sticker-card { box-shadow: none !important; border: 1px solid #ccc !important; }
-        }
+        .opt-btn:hover { transform: scale(1.25); }
+        .opt-selected { ring: 3px solid #6366f1; transform: scale(1.2); background-color: rgba(255, 255, 255, 0.9); }
+
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen pb-12 text-slate-800 transition-colors duration-500" id="appBody">
+<body class="p-3 md:p-6 min-h-screen text-slate-800">
 
-    <div class="max-w-5xl mx-auto px-4 pt-6">
-        <!-- Header Principal y Selector de Hijo -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 no-print">
-            <div class="flex items-center space-x-3">
-                <span id="titleIcon" class="text-4xl">🚀</span>
+    <div class="max-w-6xl mx-auto space-y-5">
+
+        <!-- ENCABEZADO Y SELECTOR DE NIÑOS -->
+        <header class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span id="childIconHeader" class="text-4xl">🦖</span>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-wide" id="mainTitle">Tabla de Recompensas</h1>
-                    <p class="text-xs sm:text-sm text-slate-500 font-medium">¡Consigue tus 25 estrellas esta semana!</p>
+                    <h1 id="appTitle" class="text-2xl md:text-3xl font-extrabold text-slate-900">
+                        Tabla de Recompensas de Bruno
+                    </h1>
+                    <p class="text-xs text-slate-500 font-semibold">¡Consigue tus 25 estrellas esta semana!</p>
                 </div>
             </div>
 
-            <!-- Switch entre Isaac y Bruno -->
-            <div class="flex bg-white/80 backdrop-blur p-1.5 rounded-2xl shadow-md border border-slate-200">
-                <button id="btnIsaac" onclick="switchProfile('isaac')" class="flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-                    <span>🚀</span>
-                    <span>Isaac (Espacio)</span>
-                </button>
-                <button id="btnBruno" onclick="switchProfile('bruno')" class="flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 text-slate-600 hover:bg-emerald-50">
-                    <span>🦖</span>
-                    <span>Bruno (Dino)</span>
+            <!-- BOTONES DE NIÑOS Y CONFIGURACIÓN -->
+            <div class="flex items-center gap-3">
+                <div id="childrenTabs" class="flex items-center bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm gap-1"></div>
+                <button onclick="requestPinForConfig()" class="p-2.5 bg-white hover:bg-slate-50 text-slate-600 rounded-2xl border border-slate-200 shadow-sm transition" title="Configuración">
+                    <i class="fas fa-cog text-lg"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Navegador y Control de Semanas -->
-        <section class="bg-white/90 backdrop-blur rounded-2xl p-4 mb-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
-                <button onclick="navigateWeek(-1)" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <div class="text-center">
-                    <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block" id="weekBadge">SEMANA ACTUAL</span>
-                    <span class="text-base sm:text-lg font-bold text-slate-800" id="weekDateRange">Cargando semana...</span>
+        <!-- BARRA DE FECHAS Y ACCIONES -->
+        <div class="flex flex-wrap justify-between items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-3">
+                <button onclick="changeWeek(-1)" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition text-slate-600 border border-slate-200"><i class="fas fa-chevron-left"></i></button>
+                <div class="text-left">
+                    <span class="block text-[10px] font-black text-indigo-600 uppercase tracking-widest">SEMANA ACTUAL</span>
+                    <span id="weekDates" class="text-sm font-extrabold text-slate-800">5 oct - 9 oct</span>
                 </div>
-                <button onclick="navigateWeek(1)" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
+                <button onclick="changeWeek(1)" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition text-slate-600 border border-slate-200"><i class="fas fa-chevron-right"></i></button>
             </div>
 
-            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end no-print">
-                <button onclick="printReport()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs sm:text-sm flex items-center space-x-1.5 transition">
-                    <i class="fa-solid fa-print"></i>
-                    <span>Imprimir / PDF</span>
+            <div class="flex items-center gap-2">
+                <button onclick="window.print()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs border border-slate-300 flex items-center gap-2 shadow-sm transition">
+                    <i class="fas fa-print"></i> Imprimir / PDF
                 </button>
-                <button onclick="archiveCurrentWeek()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center space-x-1.5 shadow-md shadow-emerald-200 transition">
-                    <i class="fa-solid fa-box-archive"></i>
-                    <span>Archivar Semana</span>
+                <button onclick="archiveCurrentWeek()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow transition">
+                    <i class="fas fa-box-archive"></i> Archivar Semana
                 </button>
             </div>
+        </div>
+
+        <!-- 1. TABLA PRINCIPAL DE CRITERIOS -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 md:p-6 space-y-4">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[750px]">
+                    <thead>
+                        <tr class="text-xs font-black text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-3">
+                            <th class="pb-3 w-2/5 flex items-center gap-2">
+                                <i class="fas fa-list-check text-slate-400"></i> Mis Criterios Diarios
+                            </th>
+                            <th class="pb-3 text-center">LUN</th>
+                            <th class="pb-3 text-center">MAR</th>
+                            <th class="pb-3 text-center">MIÉ</th>
+                            <th class="pb-3 text-center">JUE</th>
+                            <th class="pb-3 text-center">VIE</th>
+                            <th class="pb-3 text-center">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="criteriaTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+
+            <!-- LEYENDA Y REINICIAR -->
+            <div class="pt-4 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3 text-xs font-semibold text-slate-500">
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ⭐ Verde: 1 Pts</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> 😐 Amarillo: 0.5 Pts</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> 😡 Rojo: 0 Pts</span>
+                </div>
+                <button onclick="resetCurrentWeek()" class="text-red-500 hover:text-red-700 font-bold flex items-center gap-1 transition">
+                    <i class="fas fa-rotate-left"></i> Reiniciar esta Semana
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. TARJETAS DE META, RECOMPENSA Y BARRA DE PUNTOS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- MI META DE ESTA SEMANA -->
+            <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-blue-500 border-t border-r border-b border-slate-200 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-1">
+                        <span>🎯</span> MI META DE ESTA SEMANA
+                    </h3>
+                    <p class="text-[11px] text-slate-400 font-semibold mb-3">Quiero mejorar en:</p>
+                </div>
+                <textarea id="weekGoalInput" onchange="updateChildText('goalText', this.value)" placeholder="Escribe tu meta aquí..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-blue-400 outline-none resize-none h-20"></textarea>
+            </div>
+
+            <!-- RECOMPENSA SI ALCANZO MI META -->
+            <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-emerald-500 border-t border-r border-b border-slate-200 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-1">
+                        <span>🎁</span> RECOMPENSA SI ALCANZO MI META
+                    </h3>
+                    <p class="text-[11px] text-slate-400 font-semibold mb-3">Premio acordado:</p>
+                </div>
+                <textarea id="weekRewardInput" onchange="updateChildText('rewardText', this.value)" placeholder="Ej: Salida al parque o juguete especial..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-emerald-400 outline-none resize-none h-20"></textarea>
+            </div>
+
+            <!-- MIS ESTRELLAS ESTA SEMANA -->
+            <div class="bg-gradient-to-br from-amber-400 to-amber-500 p-5 rounded-3xl shadow-sm text-white flex flex-col justify-between">
+                <div>
+                    <h3 class="text-[11px] font-black uppercase tracking-wider opacity-90 mb-1">MIS ESTRELLAS ESTA SEMANA</h3>
+                    <div class="text-4xl font-black flex items-center gap-2 my-1">
+                        <span id="starCount">0</span> <span class="text-2xl font-bold opacity-80">/ 25</span> ⭐
+                    </div>
+                </div>
+                <div>
+                    <div class="w-full bg-amber-600/30 rounded-full h-3 mb-2 overflow-hidden p-0.5">
+                        <div id="progressBar" class="bg-white h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p class="text-[11px] font-bold opacity-90 flex items-center gap-1">
+                        <span>💪</span> ¡Sigue acumulando estrellas para alcanzar tu meta!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. REFLEXIÓN Y TABLA DE RECOMPENSAS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- ¡ESTOY ORGULLOSO DE MÍ PORQUE... -->
+            <div class="md:col-span-2 bg-white p-5 rounded-3xl shadow-sm border-l-4 border-purple-500 border-t border-r border-b border-slate-200 flex flex-col justify-between">
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-3">
+                    <span>👦</span> ¡ESTOY ORGULLOSO DE MÍ PORQUE...
+                </h3>
+                <textarea id="prideTextarea" onchange="updateChildText('prideText', this.value)" placeholder="Escribe aquí tus logros semanales..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-purple-400 outline-none resize-none h-24"></textarea>
+            </div>
+
+            <!-- TABLA DE RECOMPENSAS OSCURA -->
+            <div class="bg-[#1e1b4b] text-white p-5 rounded-3xl shadow-sm flex flex-col justify-between space-y-3">
+                <h3 class="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-amber-300">
+                    <span>🏆</span> TABLA DE RECOMPENSAS
+                </h3>
+                <div class="space-y-2 text-xs font-semibold">
+                    <div class="p-2.5 bg-indigo-900/50 rounded-xl flex justify-between items-center border border-indigo-800/50">
+                        <span class="font-bold text-amber-300">⭐ 18 - 20 pts</span>
+                        <span>Escoger el postre 🧁</span>
+                    </div>
+                    <div class="p-2.5 bg-indigo-900/50 rounded-xl flex justify-between items-center border border-indigo-800/50">
+                        <span class="font-bold text-amber-300">⭐ 21 - 23 pts</span>
+                        <span>Actividad familiar 🎮⚽</span>
+                    </div>
+                    <div class="p-2.5 bg-indigo-900/50 rounded-xl flex justify-between items-center border border-indigo-800/50">
+                        <span class="font-bold text-amber-300">⭐ 24 - 25 pts</span>
+                        <span>Recompensa especial 🎁</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. HISTORIAL ARCHIVADO -->
+        <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <h2 class="text-md font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+                <span>📜</span> Historial de Semanas Archivadas
+            </h2>
+            <div id="historyContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
         </section>
 
-        <main class="space-y-6">
-            <!-- Grid Tabla Principal de Criterios -->
-            <div class="bg-white rounded-3xl p-4 sm:p-6 sticker-card relative overflow-hidden border-2" id="gridContainer">
-                <div class="overflow-x-auto pb-2">
-                    <table class="w-full min-w-[650px] border-collapse">
-                        <thead>
-                            <tr class="border-b-2 border-slate-100">
-                                <th class="text-left py-3 px-3 text-slate-600 font-bold text-sm sm:text-base w-2/5">
-                                    <div class="flex items-center space-x-2">
-                                        <i class="fa-solid fa-list-check text-slate-400"></i>
-                                        <span>Mis Criterios Diarios</span>
-                                    </div>
-                                </th>
-                                <th class="py-3 px-2 text-center text-slate-600 font-bold text-xs sm:text-sm w-[10%]">LUN</th>
-                                <th class="py-3 px-2 text-center text-slate-600 font-bold text-xs sm:text-sm w-[10%]">MAR</th>
-                                <th class="py-3 px-2 text-center text-slate-600 font-bold text-xs sm:text-sm w-[10%]">MIÉ</th>
-                                <th class="py-3 px-2 text-center text-slate-600 font-bold text-xs sm:text-sm w-[10%]">JUE</th>
-                                <th class="py-3 px-2 text-center text-slate-600 font-bold text-xs sm:text-sm w-[10%]">VIE</th>
-                                <th class="py-3 px-2 text-center text-slate-600 font-bold text-xs sm:text-sm w-[10%]">TOTAL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="criteriaTableBody" class="divide-y divide-slate-100">
-                            <!-- Filas generadas por JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pie de Leyenda -->
-                <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-2">
-                    <div class="flex items-center space-x-4">
-                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block mr-1.5"></span>⭐ Verde: 1 Pts</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block mr-1.5"></span>😐 Amarillo: 0.5 Pts</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block mr-1.5"></span>😡 Rojo: 0 Pts</span>
-                    </div>
-                    <button onclick="resetWeekData()" class="text-rose-500 hover:text-rose-700 font-semibold flex items-center space-x-1 transition no-print">
-                        <i class="fa-solid fa-rotate-right"></i>
-                        <span>Reiniciar esta Semana</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Meta Semanal -->
-                <div class="bg-white rounded-3xl p-5 sticker-card border-l-8 border-l-blue-500 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center space-x-2.5 mb-3">
-                            <span class="p-2 bg-blue-100 text-blue-600 rounded-xl text-lg">🎯</span>
-                            <h3 class="font-bold text-slate-800 text-sm sm:text-base">MI META DE ESTA SEMANA</h3>
-                        </div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Quiero mejorar en:</label>
-                        <textarea id="goalText" oninput="saveGoalData()" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none font-medium text-slate-700" placeholder="Escribe tu meta aquí..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Recompensa por Cumplir Meta -->
-                <div class="bg-white rounded-3xl p-5 sticker-card border-l-8 border-l-emerald-500 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center space-x-2.5 mb-3">
-                            <span class="p-2 bg-emerald-100 text-emerald-600 rounded-xl text-lg">🎁</span>
-                            <h3 class="font-bold text-slate-800 text-sm sm:text-base">RECOMPENSA SI ALCANZO MI META</h3>
-                        </div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Premio acordado:</label>
-                        <textarea id="rewardText" oninput="saveGoalData()" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none font-medium text-slate-700" placeholder="Ej: Salida al parque o juguete especial..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Contador Estrellas Acumuladas -->
-                <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-3xl p-5 sticker-card flex flex-col justify-between shadow-lg shadow-orange-100 relative overflow-hidden">
-                    <div class="absolute -right-4 -bottom-4 opacity-20 text-8xl">⭐</div>
-                    <div>
-                        <h3 class="font-bold text-amber-100 text-xs sm:text-sm uppercase tracking-wider mb-1">MIS ESTRELLAS ESTA SEMANA</h3>
-                        <div class="flex items-baseline space-x-2 my-2">
-                            <span class="text-5xl font-black tracking-tight" id="totalScoreDisplay">0</span>
-                            <span class="text-2xl font-bold text-amber-200">/ 25</span>
-                            <span class="text-3xl ml-2">⭐</span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-black/20 rounded-full h-3 overflow-hidden p-0.5 mt-2">
-                        <div id="progressBar" class="bg-white h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <p id="progressMessage" class="text-xs text-amber-100 mt-2 font-medium">¡Vamos a acumular estrellas!</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                <!-- Tarjeta Orgullo -->
-                <div class="md:col-span-7 bg-white rounded-3xl p-5 sticker-card border-l-8 border-l-purple-500 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center space-x-2.5 mb-3">
-                            <span class="p-2 bg-purple-100 text-purple-600 rounded-xl text-lg">👦</span>
-                            <h3 class="font-bold text-slate-800 text-sm sm:text-base">¡ESTOY ORGULLOSO DE MÍ PORQUE...</h3>
-                        </div>
-                        <textarea id="proudText" oninput="saveGoalData()" rows="4" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none font-medium text-slate-700" placeholder="Escribe aquí tus logros semanales..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Rangos de Recompensa -->
-                <div class="md:col-span-5 bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-5 sticker-card shadow-xl flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center space-x-2.5 mb-4">
-                            <span class="p-2 bg-amber-400/20 text-amber-300 rounded-xl text-lg">🏆</span>
-                            <h3 class="font-bold text-amber-300 text-sm sm:text-base tracking-wide">TABLA DE RECOMPENSAS</h3>
-                        </div>
-                        <ul class="space-y-3 text-xs sm:text-sm">
-                            <li class="flex justify-between items-center bg-white/10 p-2.5 rounded-xl border border-white/5">
-                                <span class="font-bold text-amber-300 flex items-center">⭐ 18 - 20 pts</span>
-                                <span class="text-slate-200">Escoger el postre 🧁</span>
-                            </li>
-                            <li class="flex justify-between items-center bg-white/10 p-2.5 rounded-xl border border-white/5">
-                                <span class="font-bold text-amber-300 flex items-center">⭐ 21 - 23 pts</span>
-                                <span class="text-slate-200">Actividad familiar 🎮⚽</span>
-                            </li>
-                            <li class="flex justify-between items-center bg-amber-500/20 p-2.5 rounded-xl border border-amber-400/30">
-                                <span class="font-bold text-amber-300 flex items-center">⭐ 24 - 25 pts</span>
-                                <span class="text-amber-100 font-semibold">Recompensa especial 🎁</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección de Historial Semanal Acumulado -->
-            <section class="mt-10 bg-white rounded-3xl p-6 sticker-card no-print">
-                <div class="flex items-center space-x-3 mb-4">
-                    <span class="p-2 bg-indigo-100 text-indigo-600 rounded-xl text-xl">📜</span>
-                    <h2 class="text-xl font-bold text-slate-800">Historial de Semanas Archivado</h2>
-                </div>
-                <div id="historyContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Tarjetas de semanas pasadas archivadas -->
-                </div>
-            </section>
-        </main>
     </div>
 
+    <!-- MODAL DE CONFIGURACIÓN -->
+    <div id="configModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-200 mb-4">
+                <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-sliders text-indigo-600"></i> Panel de Configuración
+                </h3>
+                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fas fa-times text-xl"></i></button>
+            </div>
+
+            <!-- GESTIONAR NIÑOS -->
+            <div class="space-y-4 mb-6">
+                <h4 class="text-xs font-black text-slate-500 uppercase tracking-wider">1. Crear Nuevo Perfil de Niño</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="newChildName" placeholder="Nombre del niño/a" class="flex-1 p-2.5 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="newChildIcon" placeholder="Emoji (🚀)" class="w-20 p-2.5 border border-slate-300 rounded-xl text-xs text-center font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="addChild()" class="px-4 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition">Agregar Niño</button>
+                </div>
+                <div id="configChildrenList" class="flex flex-wrap gap-2 pt-2"></div>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <!-- CRITERIOS DEL NIÑO SELECCIONADO -->
+            <div class="space-y-4">
+                <h4 class="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    2. Criterios para <span id="selectedChildConfigName" class="text-indigo-600">--</span>
+                </h4>
+                <div class="flex gap-2">
+                    <input type="text" id="newCriteriaIcon" placeholder="Emoji" class="w-16 p-2.5 border border-slate-300 rounded-xl text-xs text-center font-semibold outline-none">
+                    <input type="text" id="newCriteriaName" placeholder="Descripción del criterio" class="flex-1 p-2.5 border border-slate-300 rounded-xl text-xs font-semibold outline-none">
+                    <button onclick="addCriteria()" class="px-4 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition">Añadir Criterio</button>
+                </div>
+                <div id="configCriteriaList" class="space-y-2 pt-2"></div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-200 mt-6 flex justify-end">
+                <button onclick="closeConfigModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT PRINCIPAL CON PERSISTENCIA COMPLETA -->
     <script>
-        const PROFILES_DATA = {
-            isaac: {
-                name: "Isaac",
-                icon: "🚀",
-                title: "Tabla de Recompensas de Isaac",
-                criteria: [
-                    { id: "c1", icon: "📖", title: "Hice mis trabajos a tiempo" },
-                    { id: "c2", icon: "🎒", title: "Cumplí con mis responsabilidades" },
-                    { id: "c3", icon: "👂", title: "Escuché y respeté las reglas" },
-                    { id: "c4", icon: "🎯", title: "Puse atención y terminé lo que empecé" },
-                    { id: "c5", icon: "💬", title: "Hablé con respeto" }
-                ]
-            },
-            bruno: {
-                name: "Bruno",
-                icon: "🦖",
-                title: "Tabla de Recompensas de Bruno",
-                criteria: [
-                    { id: "c1", icon: "📖", title: "Hice mis tareas" },
-                    { id: "c2", icon: "👂", title: "Escuché a mamá, papá y a mi profe" },
-                    { id: "c3", icon: "📦", title: "Guardé mis cosas" },
-                    { id: "c4", icon: "❤️", title: "Hablé y traté bien a los demás" },
-                    { id: "c5", icon: "🖐️", title: "Cuidé con responsabilidad mis pertenencias y mis útiles escolares" }
-                ]
-            }
-        };
-
-        const DAYS = ['lun', 'mar', 'mie', 'jue', 'vie'];
-        let currentProfile = 'isaac';
-        let currentWeekOffset = 0; // 0 = Semana actual, -1 = Semana pasada
-        let appData = {
-            isaac: { weeks: {} },
-            bruno: { weeks: {} }
-        };
-
-        // Utilidad de cálculo de semana
-        function getWeekKey(offset = 0) {
-            const today = new Date();
-            today.setDate(today.getDate() + (offset * 7));
-            const firstJan = new Date(today.getFullYear(), 0, 1);
-            const numberOfDays = Math.floor((today - firstJan) / (24 * 60 * 60 * 1000));
-            const weekNum = Math.ceil((today.getDay() + 1 + numberOfDays) / 7);
-            return `${today.getFullYear()}-W${weekNum}`;
-        }
-
-        function getWeekDateRange(offset = 0) {
-            const curr = new Date();
-            curr.setDate(curr.getDate() + (offset * 7));
-            const first = curr.getDate() - curr.getDay() + 1; // Lunes
-            const last = first + 4; // Viernes
-
-            const monday = new Date(curr.setDate(first));
-            const friday = new Date(curr.setDate(last));
-
-            const options = { month: 'short', day: 'numeric' };
-            return `${monday.toLocaleDateString('es-ES', options)} - ${friday.toLocaleDateString('es-ES', options)}`;
-        }
-
-        // Sintetizador de Sonido
-        function playRewardSound(type) {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) return;
-                const ctx = new AudioCtx();
-
-                if (type === 'green') {
-                    const notes = [523.25, 659.25, 783.99, 1046.50];
-                    notes.forEach((freq, idx) => {
-                        const osc = ctx.createOscillator();
-                        const gain = ctx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
-                        gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.08);
-                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.3);
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-                        osc.start(ctx.currentTime + idx * 0.08);
-                        osc.stop(ctx.currentTime + idx * 0.08 + 0.3);
-                    });
-                } else if (type === 'yellow') {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.2);
-                } else {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(220, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.25);
+        const DEFAULT_DATA = {
+            adminPin: '1234',
+            children: [
+                {
+                    id: 'bruno',
+                    name: 'Bruno (Dino)',
+                    icon: '🦖',
+                    criteria: [
+                        { icon: '📖', text: 'Hice mis tareas' },
+                        { icon: '👂', text: 'Escuché a mamá, papá y a mi profe' },
+                        { icon: '📦', text: 'Guardé mis cosas' },
+                        { icon: '❤️', text: 'Hablé y traté bien a los demás' },
+                        { icon: '🤲', text: 'Cuidé con responsabilidad mis pertenencias y mis útiles escolares' }
+                    ]
+                },
+                {
+                    id: 'isaac',
+                    name: 'Isaac (Espacio)',
+                    icon: '🚀',
+                    criteria: [
+                        { icon: '📖', text: 'Hice mis tareas' },
+                        { icon: '👂', text: 'Escuché a mamá, papá y a mi profe' },
+                        { icon: '📦', text: 'Guardé mis cosas' },
+                        { icon: '❤️', text: 'Hablé y traté bien a los demás' },
+                        { icon: '🤲', text: 'Cuidé con responsabilidad mis pertenencias' }
+                    ]
                 }
-            } catch (e) {}
-        }
-
-        function triggerConfetti(event) {
-            if (typeof confetti === 'function') {
-                const rect = event.currentTarget.getBoundingClientRect();
-                const x = (rect.left + rect.width / 2) / window.innerWidth;
-                const y = (rect.top + rect.height / 2) / window.innerHeight;
-                confetti({ particleCount: 25, spread: 60, origin: { x, y } });
-            }
-        }
-
-        window.onload = function() {
-            loadFromLocalStorage();
-            updateWeekUI();
-            renderTable();
-            updateTotals();
-            renderHistory();
+            ],
+            records: {},
+            history: []
         };
 
-        function switchProfile(profileKey) {
-            currentProfile = profileKey;
-            const profile = PROFILES_DATA[profileKey];
+        let appData = JSON.parse(localStorage.getItem('rewardChartData_v4')) || DEFAULT_DATA;
+        let selectedChildId = appData.children[0]?.id || 'bruno';
+        let currentWeekOffset = 0;
 
-            const btnIsaac = document.getElementById('btnIsaac');
-            const btnBruno = document.getElementById('btnBruno');
+        function saveData() {
+            localStorage.setItem('rewardChartData_v4', JSON.stringify(appData));
+            renderApp();
+        }
 
-            if (profileKey === 'isaac') {
-                btnIsaac.className = "flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 bg-indigo-600 text-white shadow-lg shadow-indigo-200";
-                btnBruno.className = "flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 text-slate-600 hover:bg-emerald-50";
-                document.getElementById('appBody').className = "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen pb-12 text-slate-800 transition-colors duration-500";
-            } else {
-                btnBruno.className = "flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 bg-emerald-600 text-white shadow-lg shadow-emerald-200";
-                btnIsaac.className = "flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 text-slate-600 hover:bg-indigo-50";
-                document.getElementById('appBody').className = "bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 min-h-screen pb-12 text-slate-800 transition-colors duration-500";
-            }
+        function getWeekKey(offset = 0) {
+            const now = new Date();
+            now.setDate(now.getDate() + (offset * 7));
+            const start = new Date(now);
+            start.setDate(now.getDate() - now.getDay() + 1);
+            return start.toISOString().split('T')[0];
+        }
 
-            document.getElementById('titleIcon').innerText = profile.icon;
-            document.getElementById('mainTitle').innerText = profile.title;
-
-            loadCurrentWeekFields();
-            renderTable();
-            updateTotals();
+        function renderApp() {
+            renderHeaderAndTabs();
+            renderTableAndCards();
             renderHistory();
         }
 
-        function navigateWeek(direction) {
-            currentWeekOffset += direction;
-            updateWeekUI();
-            loadCurrentWeekFields();
-            renderTable();
-            updateTotals();
-        }
-
-        function updateWeekUI() {
-            const weekKey = getWeekKey(currentWeekOffset);
-            document.getElementById('weekDateRange').innerText = getWeekDateRange(currentWeekOffset);
-            document.getElementById('weekBadge').innerText = currentWeekOffset === 0 ? "SEMANA ACTUAL" : `SEMANA (${weekKey})`;
-        }
-
-        function getCurrentWeekData() {
-            const weekKey = getWeekKey(currentWeekOffset);
-            if (!appData[currentProfile].weeks) appData[currentProfile].weeks = {};
-            if (!appData[currentProfile].weeks[weekKey]) {
-                appData[currentProfile].weeks[weekKey] = { scores: {}, goal: "", reward: "", proud: "", archived: false };
+        function renderHeaderAndTabs() {
+            const child = appData.children.find(c => c.id === selectedChildId);
+            if (child) {
+                document.getElementById('appTitle').innerText = `Tabla de Recompensas de ${child.name.split(' ')[0]}`;
+                document.getElementById('childIconHeader').innerText = child.icon;
             }
-            return appData[currentProfile].weeks[weekKey];
+
+            const container = document.getElementById('childrenTabs');
+            container.innerHTML = appData.children.map(c => `
+                <button onclick="selectChild('${c.id}')" class="px-4 py-2 rounded-xl font-extrabold text-xs border flex items-center gap-2 transition ${c.id === selectedChildId ? 'tab-active shadow-sm' : 'tab-inactive hover:bg-slate-50'}">
+                    <span>${c.icon}</span> ${c.name}
+                </button>
+            `).join('');
         }
 
-        function loadCurrentWeekFields() {
-            const weekData = getCurrentWeekData();
-            document.getElementById('goalText').value = weekData.goal || '';
-            document.getElementById('rewardText').value = weekData.reward || '';
-            document.getElementById('proudText').value = weekData.proud || '';
-        }
-
-        function renderTable() {
+        function renderTableAndCards() {
+            const child = appData.children.find(c => c.id === selectedChildId);
+            const weekKey = getWeekKey(currentWeekOffset);
             const tbody = document.getElementById('criteriaTableBody');
-            tbody.innerHTML = '';
+            
+            document.getElementById('weekDates').innerText = `Semana de ${weekKey}`;
 
-            const profile = PROFILES_DATA[currentProfile];
-            const weekData = getCurrentWeekData();
-            const currentScores = weekData.scores || {};
+            if (!appData.records[weekKey]) appData.records[weekKey] = {};
+            if (!appData.records[weekKey][selectedChildId]) appData.records[weekKey][selectedChildId] = {};
+            
+            const childWeekData = appData.records[weekKey][selectedChildId];
 
-            profile.criteria.forEach(crit => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/80 transition-colors";
+            document.getElementById('weekGoalInput').value = childWeekData.goalText || '';
+            document.getElementById('weekRewardInput').value = childWeekData.rewardText || '';
+            document.getElementById('prideTextarea').value = childWeekData.prideText || '';
 
-                let htmlContent = `
-                    <td class="py-3 px-3">
-                        <div class="flex items-center space-x-2.5">
-                            <span class="text-2xl">${crit.icon}</span>
-                            <span class="font-semibold text-slate-700 text-xs sm:text-sm leading-tight">${crit.title}</span>
-                        </div>
-                    </td>
-                `;
+            if (!child || !child.criteria.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 font-semibold text-xs">No hay criterios configurados para este niño. Haz clic en el ícono de engranaje para agregar.</td></tr>`;
+                return;
+            }
 
-                let rowSum = 0;
-                DAYS.forEach(day => {
-                    const key = `${crit.id}_${day}`;
-                    const val = currentScores[key] !== undefined ? currentScores[key] : null;
+            let totalPoints = 0;
 
-                    if (val === 1) rowSum += 1;
-                    else if (val === 0.5) rowSum += 0.5;
+            tbody.innerHTML = child.criteria.map((crit, idx) => {
+                let critTotal = 0;
 
-                    htmlContent += `
-                        <td class="py-2 px-1 text-center">
-                            <div class="flex justify-center items-center space-x-1 sm:space-x-1.5">
-                                <button onclick="setScore('${crit.id}', '${day}', 1, event)" 
-                                        class="status-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${val === 1 ? 'bg-emerald-500 text-white selected shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-emerald-100'}">
+                let daysHtml = [0, 1, 2, 3, 4].map(dayIdx => {
+                    let val = childWeekData[idx]?.[dayIdx] || null;
+                    
+                    if (val === 'star') { critTotal += 1; totalPoints += 1; }
+                    else if (val === 'neutral') { critTotal += 0.5; totalPoints += 0.5; }
+
+                    return `
+                        <td class="py-3 px-1 text-center">
+                            <div class="inline-flex items-center gap-1.5 bg-slate-50/80 p-1 rounded-full border border-slate-200 shadow-inner">
+                                <button onclick="selectOption('${weekKey}', ${idx}, ${dayIdx}, 'star')" class="opt-btn ${val === 'star' ? 'opt-selected bg-amber-100' : ''}" title="Verde: 1 pt">
                                     ⭐
                                 </button>
-                                <button onclick="setScore('${crit.id}', '${day}', 0.5, event)" 
-                                        class="status-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${val === 0.5 ? 'bg-amber-400 text-white selected shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-amber-100'}">
+                                <button onclick="selectOption('${weekKey}', ${idx}, ${dayIdx}, 'neutral')" class="opt-btn ${val === 'neutral' ? 'opt-selected bg-amber-100' : ''}" title="Amarillo: 0.5 pt">
                                     😐
                                 </button>
-                                <button onclick="setScore('${crit.id}', '${day}', 0, event)" 
-                                        class="status-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${val === 0 ? 'bg-rose-500 text-white selected shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-rose-100'}">
+                                <button onclick="selectOption('${weekKey}', ${idx}, ${dayIdx}, 'angry')" class="opt-btn ${val === 'angry' ? 'opt-selected bg-red-100' : ''}" title="Rojo: 0 pt">
                                     😡
                                 </button>
                             </div>
                         </td>
                     `;
-                });
+                }).join('');
 
-                htmlContent += `
-                    <td class="py-3 px-2 text-center font-bold text-slate-700 text-sm sm:text-base">
-                        <span class="px-2.5 py-1 bg-slate-100 rounded-lg text-slate-800">${rowSum}</span>
-                    </td>
+                return `
+                    <tr class="hover:bg-slate-50/60 transition">
+                        <td class="py-3 pr-2 font-bold text-slate-800 text-xs flex items-center gap-2.5">
+                            <span class="text-base">${crit.icon || '📌'}</span>
+                            <span>${crit.text}</span>
+                        </td>
+                        ${daysHtml}
+                        <td class="py-3 text-center font-black text-slate-800 text-xs">
+                            <span class="px-2.5 py-1 bg-slate-100 rounded-lg border border-slate-200">${critTotal}</span>
+                        </td>
+                    </tr>
                 `;
+            }).join('');
 
-                tr.innerHTML = htmlContent;
-                tbody.appendChild(tr);
-            });
+            // Puntuación acumulada
+            document.getElementById('starCount').innerText = totalPoints;
+            const percentage = Math.min(100, Math.round((totalPoints / 25) * 100));
+            document.getElementById('progressBar').style.width = `${percentage}%`;
         }
 
-        function setScore(critId, day, value, event) {
-            const weekData = getCurrentWeekData();
-            const key = `${critId}_${day}`;
+        function updateChildText(field, val) {
+            const weekKey = getWeekKey(currentWeekOffset);
+            if (!appData.records[weekKey]) appData.records[weekKey] = {};
+            if (!appData.records[weekKey][selectedChildId]) appData.records[weekKey][selectedChildId] = {};
+            
+            appData.records[weekKey][selectedChildId][field] = val;
+            localStorage.setItem('rewardChartData_v4', JSON.stringify(appData));
+        }
 
-            if (weekData.scores[key] === value) {
-                delete weekData.scores[key];
+        function selectOption(weekKey, criteriaIdx, dayIdx, option) {
+            if (!appData.records[weekKey]) appData.records[weekKey] = {};
+            if (!appData.records[weekKey][selectedChildId]) appData.records[weekKey][selectedChildId] = {};
+            if (!appData.records[weekKey][selectedChildId][criteriaIdx]) appData.records[weekKey][selectedChildId][criteriaIdx] = {};
+
+            const prev = appData.records[weekKey][selectedChildId][criteriaIdx][dayIdx];
+            if (prev === option) {
+                delete appData.records[weekKey][selectedChildId][criteriaIdx][dayIdx];
             } else {
-                weekData.scores[key] = value;
-                if (value === 1) {
-                    playRewardSound('green');
-                    triggerConfetti(event);
-                } else if (value === 0.5) {
-                    playRewardSound('yellow');
-                } else {
-                    playRewardSound('red');
+                appData.records[weekKey][selectedChildId][criteriaIdx][dayIdx] = option;
+                if (option === 'star' && typeof confetti === 'function') {
+                    confetti({ particleCount: 20, spread: 40, origin: { y: 0.7 } });
                 }
             }
 
-            saveToLocalStorage();
-            renderTable();
-            updateTotals();
+            saveData();
         }
 
-        function updateTotals() {
-            const weekData = getCurrentWeekData();
-            const scores = weekData.scores || {};
-            let total = 0;
-            Object.values(scores).forEach(v => { if (typeof v === 'number') total += v; });
-
-            document.getElementById('totalScoreDisplay').innerText = total;
-
-            const percentage = Math.min(100, Math.round((total / 25) * 100));
-            document.getElementById('progressBar').style.width = `${percentage}%`;
-
-            const message = document.getElementById('progressMessage');
-            if (total >= 24) message.innerText = "🎉 ¡Increíble! ¡Recompensa Especial asegurada!";
-            else if (total >= 21) message.innerText = "🎮 ¡Excelente! Actividad Familiar alcanzada.";
-            else if (total >= 18) message.innerText = "🧁 ¡Muy bien! Has ganado Escoger el Postre.";
-            else message.innerText = "💪 ¡Sigue acumulando estrellas para alcanzar tu meta!";
+        function resetCurrentWeek() {
+            if (confirm('¿Quieres reiniciar todas las calificaciones de esta semana para este niño?')) {
+                const weekKey = getWeekKey(currentWeekOffset);
+                if (appData.records[weekKey]?.[selectedChildId]) {
+                    delete appData.records[weekKey][selectedChildId];
+                    saveData();
+                }
+            }
         }
 
-        function saveGoalData() {
-            const weekData = getCurrentWeekData();
-            weekData.goal = document.getElementById('goalText').value;
-            weekData.reward = document.getElementById('rewardText').value;
-            weekData.proud = document.getElementById('proudText').value;
-            saveToLocalStorage();
+        function selectChild(id) {
+            selectedChildId = id;
+            renderApp();
+        }
+
+        function changeWeek(offset) {
+            currentWeekOffset += offset;
+            renderApp();
         }
 
         function archiveCurrentWeek() {
-            const weekData = getCurrentWeekData();
-            weekData.archived = true;
-            saveToLocalStorage();
-            renderHistory();
-            alert(`¡Semana de ${PROFILES_DATA[currentProfile].name} archivada con éxito!`);
+            const weekKey = getWeekKey(currentWeekOffset);
+            const child = appData.children.find(c => c.id === selectedChildId);
+            const childWeekData = appData.records[weekKey]?.[selectedChildId] || {};
+
+            let points = 0;
+            if (child.criteria) {
+                child.criteria.forEach((_, idx) => {
+                    [0, 1, 2, 3, 4].forEach(d => {
+                        const val = childWeekData[idx]?.[d];
+                        if (val === 'star') points += 1;
+                        if (val === 'neutral') points += 0.5;
+                    });
+                });
+            }
+
+            appData.history.push({
+                date: new Date().toLocaleDateString(),
+                weekKey: weekKey,
+                childName: child.name,
+                childIcon: child.icon,
+                stars: points,
+                goal: childWeekData.goalText || 'Sin meta',
+                reward: childWeekData.rewardText || 'Sin premio'
+            });
+
+            saveData();
+            alert(`¡Semana de ${child.name} archivada!`);
         }
 
         function renderHistory() {
             const container = document.getElementById('historyContainer');
-            container.innerHTML = '';
-
-            const weeks = appData[currentProfile].weeks || {};
-            const keys = Object.keys(weeks).reverse();
-
-            if (keys.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 italic col-span-full">Aún no hay semanas archivadas.</p>`;
+            if (!appData.history.length) {
+                container.innerHTML = `<p class="text-xs text-slate-400 font-semibold col-span-full">No hay semanas archivadas aún.</p>`;
                 return;
             }
 
-            keys.forEach(key => {
-                const w = weeks[key];
-                let total = 0;
-                Object.values(w.scores || {}).forEach(v => { if (typeof v === 'number') total += v; });
-
-                const card = document.createElement('div');
-                card.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs flex flex-col justify-between";
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-slate-700">${key}</span>
-                            <span class="px-2 py-0.5 bg-amber-100 text-amber-700 font-bold rounded-lg">${total} / 25 ⭐</span>
-                        </div>
-                        <p class="text-slate-500 mb-1"><strong>Meta:</strong> ${w.goal || 'Sin meta'}</p>
-                        <p class="text-slate-500"><strong>Premio:</strong> ${w.reward || 'Sin premio'}</p>
+            container.innerHTML = appData.history.slice(-6).reverse().map(h => `
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-indigo-600">${h.weekKey}</span>
+                        <span class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded-full font-black text-[10px]">${h.stars} / 25 ⭐</span>
                     </div>
-                `;
-                container.appendChild(card);
-            });
+                    <h4 class="font-bold text-slate-800 text-xs">${h.childIcon} ${h.childName}</h4>
+                    <p class="text-[11px] text-slate-500"><b>Meta:</b> ${h.goal}</p>
+                </div>
+            `).join('');
         }
 
-        function resetWeekData() {
-            if (confirm(`¿Reiniciar los puntos de esta semana para ${PROFILES_DATA[currentProfile].name}?`)) {
-                const weekData = getCurrentWeekData();
-                weekData.scores = {};
-                saveToLocalStorage();
-                renderTable();
-                updateTotals();
+        // SEGURIDAD Y CONFIGURACIÓN
+        function requestPinForConfig() {
+            const pin = prompt('Ingresa la clave de administración (Por defecto: 1234):');
+            if (pin === (appData.adminPin || '1234')) {
+                openConfigModal();
+            } else if (pin !== null) {
+                alert('Clave incorrecta.');
             }
         }
 
-        function printReport() {
-            window.print();
+        function openConfigModal() {
+            document.getElementById('configModal').classList.remove('hidden');
+            renderConfigChildren();
+            renderConfigCriteria();
         }
 
-        function saveToLocalStorage() {
-            localStorage.setItem('reward_chart_app_data_v2', JSON.stringify(appData));
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+            renderApp();
         }
 
-        function loadFromLocalStorage() {
-            const saved = localStorage.getItem('reward_chart_app_data_v2');
-            if (saved) {
-                try { appData = JSON.parse(saved); } catch (e) {}
-            }
+        function renderConfigChildren() {
+            const list = document.getElementById('configChildrenList');
+            list.innerHTML = appData.children.map(c => `
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700">
+                    <span>${c.icon} ${c.name}</span>
+                    <button onclick="deleteChild('${c.id}')" class="text-red-500 hover:text-red-700 ml-1"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
         }
+
+        function addChild() {
+            const name = document.getElementById('newChildName').value.trim();
+            const icon = document.getElementById('newChildIcon').value.trim() || '⭐';
+            if (!name) return;
+
+            const id = name.toLowerCase().replace(/\s+/g, '-');
+            const defaultCriteria = appData.children[0]?.criteria || [
+                { icon: '📖', text: 'Hice mis tareas' }
+            ];
+
+            appData.children.push({ id, name, icon, criteria: [...defaultCriteria] });
+            document.getElementById('newChildName').value = '';
+            document.getElementById('newChildIcon').value = '';
+            selectedChildId = id;
+            saveData();
+            renderConfigChildren();
+            renderConfigCriteria();
+        }
+
+        function deleteChild(id) {
+            if (appData.children.length <= 1) return alert('Debes mantener al menos un niño.');
+            appData.children = appData.children.filter(c => c.id !== id);
+            selectedChildId = appData.children[0].id;
+            saveData();
+            renderConfigChildren();
+            renderConfigCriteria();
+        }
+
+        function renderConfigCriteria() {
+            const child = appData.children.find(c => c.id === selectedChildId);
+            document.getElementById('selectedChildConfigName').innerText = child?.name || '';
+            const list = document.getElementById('configCriteriaList');
+
+            if (!child) return;
+
+            list.innerHTML = child.criteria.map((crit, idx) => `
+                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs font-semibold">
+                    <span class="flex items-center gap-2"><span class="text-base">${crit.icon || '📌'}</span> ${crit.text}</span>
+                    <button onclick="deleteCriteria(${idx})" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function addCriteria() {
+            const iconInput = document.getElementById('newCriteriaIcon');
+            const textInput = document.getElementById('newCriteriaName');
+            const icon = iconInput.value.trim() || '📌';
+            const text = textInput.value.trim();
+            if (!text) return;
+
+            const child = appData.children.find(c => c.id === selectedChildId);
+            child.criteria.push({ icon, text });
+            iconInput.value = '';
+            textInput.value = '';
+            saveData();
+            renderConfigCriteria();
+        }
+
+        function deleteCriteria(idx) {
+            const child = appData.children.find(c => c.id === selectedChildId);
+            child.criteria.splice(idx, 1);
+            saveData();
+            renderConfigCriteria();
+        }
+
+        // INICIALIZACIÓN
+        renderApp();
     </script>
 </body>
 </html>
