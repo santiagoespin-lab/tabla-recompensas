@@ -6,6 +6,8 @@
     <title>Tabla de Recompensas Interactiva</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&display=swap');
@@ -44,7 +46,7 @@
                 <span id="childIconHeader" class="text-4xl">🦖</span>
                 <div>
                     <h1 id="appTitle" class="text-2xl md:text-3xl font-extrabold text-slate-900">
-                        Tabla de Recompensas de Bruno
+                        Tabla de Recompensas
                     </h1>
                     <p class="text-xs text-slate-500 font-semibold">¡Consigue tus 25 estrellas esta semana!</p>
                 </div>
@@ -65,7 +67,7 @@
                 <button onclick="changeWeek(-1)" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition text-slate-600 border border-slate-200"><i class="fas fa-chevron-left"></i></button>
                 <div class="text-left">
                     <span class="block text-[10px] font-black text-indigo-600 uppercase tracking-widest">SEMANA ACTUAL</span>
-                    <span id="weekDates" class="text-sm font-extrabold text-slate-800">5 oct - 9 oct</span>
+                    <span id="weekDates" class="text-sm font-extrabold text-slate-800">-- / --</span>
                 </div>
                 <button onclick="changeWeek(1)" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition text-slate-600 border border-slate-200"><i class="fas fa-chevron-right"></i></button>
             </div>
@@ -124,7 +126,7 @@
                     </h3>
                     <p class="text-[11px] text-slate-400 font-semibold mb-3">Quiero mejorar en:</p>
                 </div>
-                <textarea id="weekGoalInput" onchange="updateChildText('goalText', this.value)" placeholder="Escribe tu meta aquí..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-blue-400 outline-none resize-none h-20"></textarea>
+                <textarea id="weekGoalInput" oninput="updateChildText('goal_text', this.value)" placeholder="Escribe tu meta aquí..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-blue-400 outline-none resize-none h-20"></textarea>
             </div>
 
             <!-- RECOMPENSA SI ALCANZO MI META -->
@@ -135,7 +137,7 @@
                     </h3>
                     <p class="text-[11px] text-slate-400 font-semibold mb-3">Premio acordado:</p>
                 </div>
-                <textarea id="weekRewardInput" onchange="updateChildText('rewardText', this.value)" placeholder="Ej: Salida al parque o juguete especial..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-emerald-400 outline-none resize-none h-20"></textarea>
+                <textarea id="weekRewardInput" oninput="updateChildText('reward_text', this.value)" placeholder="Ej: Salida al parque o juguete especial..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-emerald-400 outline-none resize-none h-20"></textarea>
             </div>
 
             <!-- MIS ESTRELLAS ESTA SEMANA -->
@@ -164,7 +166,7 @@
                 <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-3">
                     <span>👦</span> ¡ESTOY ORGULLOSO DE MÍ PORQUE...
                 </h3>
-                <textarea id="prideTextarea" onchange="updateChildText('prideText', this.value)" placeholder="Escribe aquí tus logros semanales..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-purple-400 outline-none resize-none h-24"></textarea>
+                <textarea id="prideTextarea" oninput="updateChildText('pride_text', this.value)" placeholder="Escribe aquí tus logros semanales..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-purple-400 outline-none resize-none h-24"></textarea>
             </div>
 
             <!-- TABLA DE RECOMPENSAS OSCURA -->
@@ -241,11 +243,39 @@
         </div>
     </div>
 
-    <!-- SCRIPT PRINCIPAL CON PERSISTENCIA COMPLETA -->
+    <!-- SCRIPT DE CONEXIÓN CON SUPABASE -->
     <script>
-        const DEFAULT_DATA = {
-            adminPin: '1234',
-            children: [
+        const SUPABASE_URL = "https://lfpduuqphvqivvukraii.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcGR1dXFwaHZxaXZ2dWtyYWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0OTM5MDcsImV4cCI6MjEwNzA2OTkwN30.yHgR0ka70jhZDruxP0_86FUMMKnmyTUR6Da6Jxj73oI";
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let appData = {
+            children: [],
+            records: {},
+            history: []
+        };
+
+        let selectedChildId = null;
+        let currentWeekOffset = 0;
+        const ADMIN_PIN = '1234';
+
+        // INICIALIZAR Y CARGAR DATOS DE SUPABASE
+        async function initApp() {
+            await loadDataFromSupabase();
+            if (appData.children.length === 0) {
+                // Crear datos por defecto si la base está vacía
+                await seedDefaultData();
+            } else {
+                if (!selectedChildId || !appData.children.some(c => c.id === selectedChildId)) {
+                    selectedChildId = appData.children[0].id;
+                }
+                renderApp();
+            }
+        }
+
+        async function seedDefaultData() {
+            const defaultChildren = [
                 {
                     id: 'bruno',
                     name: 'Bruno (Dino)',
@@ -255,7 +285,7 @@
                         { icon: '👂', text: 'Escuché a mamá, papá y a mi profe' },
                         { icon: '📦', text: 'Guardé mis cosas' },
                         { icon: '❤️', text: 'Hablé y traté bien a los demás' },
-                        { icon: '🤲', text: 'Cuidé con responsabilidad mis pertenencias y mis útiles escolares' }
+                        { icon: '🤲', text: 'Cuidé con responsabilidad mis pertenencias y útiles' }
                     ]
                 },
                 {
@@ -270,18 +300,51 @@
                         { icon: '🤲', text: 'Cuidé con responsabilidad mis pertenencias' }
                     ]
                 }
-            ],
-            records: {},
-            history: []
-        };
+            ];
 
-        let appData = JSON.parse(localStorage.getItem('rewardChartData_v4')) || DEFAULT_DATA;
-        let selectedChildId = appData.children[0]?.id || 'bruno';
-        let currentWeekOffset = 0;
-
-        function saveData() {
-            localStorage.setItem('rewardChartData_v4', JSON.stringify(appData));
+            for (let child of defaultChildren) {
+                await supabaseClient.from('children').upsert(child);
+            }
+            selectedChildId = 'bruno';
+            await loadDataFromSupabase();
             renderApp();
+        }
+
+        async function loadDataFromSupabase() {
+            // 1. Cargar Niños
+            const { data: childrenData, error: errChildren } = await supabaseClient.from('children').select('*');
+            if (!errChildren && childrenData) {
+                appData.children = childrenData;
+            }
+
+            // 2. Cargar Historial
+            const { data: historyData, error: errHistory } = await supabaseClient.from('archived_weeks').select('*');
+            if (!errHistory && historyData) {
+                appData.history = historyData;
+            }
+
+            // 3. Cargar Registros de la semana actual
+            const weekKey = getWeekKey(currentWeekOffset);
+            if (!appData.records[weekKey]) appData.records[weekKey] = {};
+
+            const { data: recordsData, error: errRecords } = await supabaseClient
+                .from('weekly_records')
+                .select('*')
+                .eq('week_key', weekKey);
+
+            if (!errRecords && recordsData) {
+                recordsData.forEach(row => {
+                    if (!appData.records[weekKey][row.child_id]) {
+                        appData.records[weekKey][row.child_id] = {};
+                    }
+                    appData.records[weekKey][row.child_id] = {
+                        goalText: row.goal_text || '',
+                        rewardText: row.reward_text || '',
+                        prideText: row.pride_text || '',
+                        ...(row.data || {})
+                    };
+                });
+            }
         }
 
         function getWeekKey(offset = 0) {
@@ -318,7 +381,7 @@
             const weekKey = getWeekKey(currentWeekOffset);
             const tbody = document.getElementById('criteriaTableBody');
             
-            document.getElementById('weekDates').innerText = `Semana de ${weekKey}`;
+            document.getElementById('weekDates').innerText = `Semana del ${weekKey}`;
 
             if (!appData.records[weekKey]) appData.records[weekKey] = {};
             if (!appData.records[weekKey][selectedChildId]) appData.records[weekKey][selectedChildId] = {};
@@ -329,8 +392,8 @@
             document.getElementById('weekRewardInput').value = childWeekData.rewardText || '';
             document.getElementById('prideTextarea').value = childWeekData.prideText || '';
 
-            if (!child || !child.criteria.length) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 font-semibold text-xs">No hay criterios configurados para este niño. Haz clic en el ícono de engranaje para agregar.</td></tr>`;
+            if (!child || !child.criteria || !child.criteria.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 font-semibold text-xs">No hay criterios configurados para este niño.</td></tr>`;
                 return;
             }
 
@@ -348,15 +411,9 @@
                     return `
                         <td class="py-3 px-1 text-center">
                             <div class="inline-flex items-center gap-1.5 bg-slate-50/80 p-1 rounded-full border border-slate-200 shadow-inner">
-                                <button onclick="selectOption('${weekKey}', ${idx}, ${dayIdx}, 'star')" class="opt-btn ${val === 'star' ? 'opt-selected bg-amber-100' : ''}" title="Verde: 1 pt">
-                                    ⭐
-                                </button>
-                                <button onclick="selectOption('${weekKey}', ${idx}, ${dayIdx}, 'neutral')" class="opt-btn ${val === 'neutral' ? 'opt-selected bg-amber-100' : ''}" title="Amarillo: 0.5 pt">
-                                    😐
-                                </button>
-                                <button onclick="selectOption('${weekKey}', ${idx}, ${dayIdx}, 'angry')" class="opt-btn ${val === 'angry' ? 'opt-selected bg-red-100' : ''}" title="Rojo: 0 pt">
-                                    😡
-                                </button>
+                                <button onclick="selectOption(${idx}, ${dayIdx}, 'star')" class="opt-btn ${val === 'star' ? 'opt-selected bg-amber-100' : ''}">⭐</button>
+                                <button onclick="selectOption(${idx}, ${dayIdx}, 'neutral')" class="opt-btn ${val === 'neutral' ? 'opt-selected bg-amber-100' : ''}">😐</button>
+                                <button onclick="selectOption(${idx}, ${dayIdx}, 'angry')" class="opt-btn ${val === 'angry' ? 'opt-selected bg-red-100' : ''}">😡</button>
                             </div>
                         </td>
                     `;
@@ -376,22 +433,25 @@
                 `;
             }).join('');
 
-            // Puntuación acumulada
             document.getElementById('starCount').innerText = totalPoints;
             const percentage = Math.min(100, Math.round((totalPoints / 25) * 100));
             document.getElementById('progressBar').style.width = `${percentage}%`;
         }
 
-        function updateChildText(field, val) {
+        async function updateChildText(field, val) {
             const weekKey = getWeekKey(currentWeekOffset);
             if (!appData.records[weekKey]) appData.records[weekKey] = {};
             if (!appData.records[weekKey][selectedChildId]) appData.records[weekKey][selectedChildId] = {};
             
-            appData.records[weekKey][selectedChildId][field] = val;
-            localStorage.setItem('rewardChartData_v4', JSON.stringify(appData));
+            if (field === 'goal_text') appData.records[weekKey][selectedChildId].goalText = val;
+            if (field === 'reward_text') appData.records[weekKey][selectedChildId].rewardText = val;
+            if (field === 'pride_text') appData.records[weekKey][selectedChildId].prideText = val;
+
+            await saveWeekToSupabase(weekKey, selectedChildId);
         }
 
-        function selectOption(weekKey, criteriaIdx, dayIdx, option) {
+        async function selectOption(criteriaIdx, dayIdx, option) {
+            const weekKey = getWeekKey(currentWeekOffset);
             if (!appData.records[weekKey]) appData.records[weekKey] = {};
             if (!appData.records[weekKey][selectedChildId]) appData.records[weekKey][selectedChildId] = {};
             if (!appData.records[weekKey][selectedChildId][criteriaIdx]) appData.records[weekKey][selectedChildId][criteriaIdx] = {};
@@ -406,30 +466,51 @@
                 }
             }
 
-            saveData();
+            renderApp();
+            await saveWeekToSupabase(weekKey, selectedChildId);
         }
 
-        function resetCurrentWeek() {
+        async function saveWeekToSupabase(weekKey, childId) {
+            const record = appData.records[weekKey][childId];
+            const cleanData = { ...record };
+            delete cleanData.goalText;
+            delete cleanData.rewardText;
+            delete cleanData.prideText;
+
+            await supabaseClient.from('weekly_records').upsert({
+                week_key: weekKey,
+                child_id: childId,
+                goal_text: record.goalText || '',
+                reward_text: record.rewardText || '',
+                pride_text: record.prideText || '',
+                data: cleanData
+            }, { onConflict: 'week_key,child_id' });
+        }
+
+        async function resetCurrentWeek() {
             if (confirm('¿Quieres reiniciar todas las calificaciones de esta semana para este niño?')) {
                 const weekKey = getWeekKey(currentWeekOffset);
                 if (appData.records[weekKey]?.[selectedChildId]) {
                     delete appData.records[weekKey][selectedChildId];
-                    saveData();
+                    await supabaseClient.from('weekly_records').delete().match({ week_key: weekKey, child_id: selectedChildId });
+                    renderApp();
                 }
             }
         }
 
-        function selectChild(id) {
+        async function selectChild(id) {
             selectedChildId = id;
+            await loadDataFromSupabase();
             renderApp();
         }
 
-        function changeWeek(offset) {
+        async function changeWeek(offset) {
             currentWeekOffset += offset;
+            await loadDataFromSupabase();
             renderApp();
         }
 
-        function archiveCurrentWeek() {
+        async function archiveCurrentWeek() {
             const weekKey = getWeekKey(currentWeekOffset);
             const child = appData.children.find(c => c.id === selectedChildId);
             const childWeekData = appData.records[weekKey]?.[selectedChildId] || {};
@@ -445,18 +526,25 @@
                 });
             }
 
-            appData.history.push({
-                date: new Date().toLocaleDateString(),
-                weekKey: weekKey,
-                childName: child.name,
-                childIcon: child.icon,
+            const archiveObj = {
+                week_key: weekKey,
+                child_id: child.id,
+                child_name: child.name,
+                child_icon: child.icon,
                 stars: points,
                 goal: childWeekData.goalText || 'Sin meta',
-                reward: childWeekData.rewardText || 'Sin premio'
-            });
+                reward: childWeekData.rewardText || 'Sin premio',
+                date: new Date().toLocaleDateString()
+            };
 
-            saveData();
-            alert(`¡Semana de ${child.name} archivada!`);
+            const { data, error } = await supabaseClient.from('archived_weeks').insert([archiveObj]).select();
+            if (!error && data) {
+                appData.history.push(data[0]);
+                renderHistory();
+                alert(`¡Semana de ${child.name} archivada en la nube con éxito!`);
+            } else {
+                alert('Error al archivar la semana.');
+            }
         }
 
         function renderHistory() {
@@ -469,10 +557,10 @@
             container.innerHTML = appData.history.slice(-6).reverse().map(h => `
                 <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-indigo-600">${h.weekKey}</span>
+                        <span class="text-[10px] font-black text-indigo-600">${h.week_key}</span>
                         <span class="px-2 py-0.5 bg-amber-100 text-amber-900 rounded-full font-black text-[10px]">${h.stars} / 25 ⭐</span>
                     </div>
-                    <h4 class="font-bold text-slate-800 text-xs">${h.childIcon} ${h.childName}</h4>
+                    <h4 class="font-bold text-slate-800 text-xs">${h.child_icon} ${h.child_name}</h4>
                     <p class="text-[11px] text-slate-500"><b>Meta:</b> ${h.goal}</p>
                 </div>
             `).join('');
@@ -481,7 +569,7 @@
         // SEGURIDAD Y CONFIGURACIÓN
         function requestPinForConfig() {
             const pin = prompt('Ingresa la clave de administración (Por defecto: 1234):');
-            if (pin === (appData.adminPin || '1234')) {
+            if (pin === ADMIN_PIN) {
                 openConfigModal();
             } else if (pin !== null) {
                 alert('Clave incorrecta.');
@@ -509,7 +597,7 @@
             `).join('');
         }
 
-        function addChild() {
+        async function addChild() {
             const name = document.getElementById('newChildName').value.trim();
             const icon = document.getElementById('newChildIcon').value.trim() || '⭐';
             if (!name) return;
@@ -519,22 +607,32 @@
                 { icon: '📖', text: 'Hice mis tareas' }
             ];
 
-            appData.children.push({ id, name, icon, criteria: [...defaultCriteria] });
-            document.getElementById('newChildName').value = '';
-            document.getElementById('newChildIcon').value = '';
-            selectedChildId = id;
-            saveData();
-            renderConfigChildren();
-            renderConfigCriteria();
+            const newChild = { id, name, icon, criteria: defaultCriteria };
+            const { error } = await supabaseClient.from('children').insert([newChild]);
+
+            if (!error) {
+                appData.children.push(newChild);
+                document.getElementById('newChildName').value = '';
+                document.getElementById('newChildIcon').value = '';
+                selectedChildId = id;
+                renderConfigChildren();
+                renderConfigCriteria();
+                renderApp();
+            } else {
+                alert('Error al crear el niño (es posible que el ID ya exista).');
+            }
         }
 
-        function deleteChild(id) {
+        async function deleteChild(id) {
             if (appData.children.length <= 1) return alert('Debes mantener al menos un niño.');
-            appData.children = appData.children.filter(c => c.id !== id);
-            selectedChildId = appData.children[0].id;
-            saveData();
-            renderConfigChildren();
-            renderConfigCriteria();
+            const { error } = await supabaseClient.from('children').delete().eq('id', id);
+            if (!error) {
+                appData.children = appData.children.filter(c => c.id !== id);
+                selectedChildId = appData.children[0].id;
+                renderConfigChildren();
+                renderConfigCriteria();
+                renderApp();
+            }
         }
 
         function renderConfigCriteria() {
@@ -552,7 +650,7 @@
             `).join('');
         }
 
-        function addCriteria() {
+        async function addCriteria() {
             const iconInput = document.getElementById('newCriteriaIcon');
             const textInput = document.getElementById('newCriteriaName');
             const icon = iconInput.value.trim() || '📌';
@@ -561,21 +659,27 @@
 
             const child = appData.children.find(c => c.id === selectedChildId);
             child.criteria.push({ icon, text });
+
+            await supabaseClient.from('children').update({ criteria: child.criteria }).eq('id', child.id);
+
             iconInput.value = '';
             textInput.value = '';
-            saveData();
             renderConfigCriteria();
+            renderApp();
         }
 
-        function deleteCriteria(idx) {
+        async function deleteCriteria(idx) {
             const child = appData.children.find(c => c.id === selectedChildId);
             child.criteria.splice(idx, 1);
-            saveData();
+
+            await supabaseClient.from('children').update({ criteria: child.criteria }).eq('id', child.id);
+
             renderConfigCriteria();
+            renderApp();
         }
 
-        // INICIALIZACIÓN
-        renderApp();
+        // INICIO AUTOMÁTICO AL CARGAR LA PÁGINA
+        initApp();
     </script>
 </body>
 </html>
